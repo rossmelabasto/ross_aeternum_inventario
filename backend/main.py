@@ -5,7 +5,7 @@ import secrets
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-from sqlalchemy import func, select, text, update
+from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -86,17 +86,18 @@ def salud(db: Session = Depends(get_db)):
 
 @app.get(f"{API}/resumen", response_model=schemas.Resumen, tags=["Sistema"])
 def resumen(db: Session = Depends(get_db)):
-    p = db.execute(
-        select(
-            func.count(models.Producto.id),
-            func.coalesce(func.sum(models.Producto.stock), 0),
-            func.coalesce(func.sum(models.Producto.stock * models.Producto.precio), 0),
+    fila = db.execute(
+        text(
+            """
+            select (select count(*) from productos)                          as productos,
+                   (select coalesce(sum(stock), 0) from productos)           as unidades_en_stock,
+                   (select coalesce(sum(stock * precio), 0) from productos)  as valor_inventario,
+                   (select count(*) from ventas)                             as ventas,
+                   (select coalesce(sum(total), 0) from ventas)              as ingresos
+            """
         )
     ).one()
-    v = db.execute(select(func.count(models.Venta.id), func.coalesce(func.sum(models.Venta.total), 0))).one()
-    return schemas.Resumen(
-        productos=p[0], unidades_en_stock=p[1], valor_inventario=p[2], ventas=v[0], ingresos=v[1]
-    )
+    return schemas.Resumen(**fila._mapping)
 
 
 # --------------------------------------------------------------- Categorías
@@ -210,6 +211,21 @@ def borrar_producto(producto_id: int, db: Session = Depends(get_db)):
 
 
 # ------------------------------------------------------------------- Ventas
+VENDER = text(
+    """
+    with p as (
+        update productos set stock = stock - :c
+        where id = :id and stock >= :c
+        returning id, nombre, precio, stock
+    ), v as (
+        insert into ventas (producto_id, cantidad, precio_unitario, canal)
+        select id, :c, precio, :canal from p
+        returning *
+    )
+    select v.*, p.nombre as producto, p.stock as stock_restante from v join p on p.id = v.producto_id
+    """
+)
+
 @app.get(f"{API}/ventas", response_model=list[schemas.VentaOut], tags=["Ventas"])
 def listar_ventas(limite: int = Query(50, ge=1, le=500), db: Session = Depends(get_db)):
     q = select(models.Venta).order_by(models.Venta.id.desc()).limit(limite)
@@ -224,26 +240,14 @@ def listar_ventas(limite: int = Query(50, ge=1, le=500), db: Session = Depends(g
     responses={409: {"description": "No hay stock suficiente"}},
 )
 def registrar_venta(datos: schemas.VentaCreate, db: Session = Depends(get_db)):
-    """Descuenta el stock y registra la venta en una sola transacción.
+    """Descuenta el stock y registra la venta en **una sola sentencia SQL** (atómica).
 
-    El UPDATE solo afecta la fila si `stock >= cantidad`, así dos ventas simultáneas
-    del último par no pueden dejar el stock en negativo.
+    El UPDATE solo afecta la fila si `stock >= cantidad`: si dos personas compran el último
+    par al mismo tiempo, solo una venta pasa y la otra recibe 409.
     """
-    fila = db.execute(
-        update(models.Producto)
-        .where(models.Producto.id == datos.producto_id, models.Producto.stock >= datos.cantidad)
-        .values(stock=models.Producto.stock - datos.cantidad)
-        .returning(models.Producto.stock, models.Producto.precio)
-    ).first()
+    fila = db.execute(VENDER, {"id": datos.producto_id, "c": datos.cantidad, "canal": datos.canal}).first()
     if fila is None:
-        db.rollback()
         obtener(db, models.Producto, datos.producto_id, "Producto")  # 404 si no existe
         raise HTTPException(status.HTTP_409_CONFLICT, "No hay stock suficiente para esa venta")
-
-    venta = models.Venta(
-        producto_id=datos.producto_id, cantidad=datos.cantidad, precio_unitario=fila.precio, canal=datos.canal
-    )
-    db.add(venta)
-    guardar(db, "No se pudo registrar la venta")
-    db.refresh(venta)
-    return schemas.VentaRegistrada(venta=venta_out(venta), stock_restante=fila.stock)
+    venta = schemas.VentaOut.model_validate(dict(fila._mapping))
+    return schemas.VentaRegistrada(venta=venta, stock_restante=fila.stock_restante)

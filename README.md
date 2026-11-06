@@ -37,7 +37,8 @@ categorias (1) ──< productos (N) ──< ventas (N)
 | `productos` | id, categoria_id → categorias, nombre, marca, talla, condicion, precio, stock, image_url, created_at | `stock >= 0`, `precio > 0`, talla 30–50 |
 | `ventas` | id, producto_id → productos, cantidad, precio_unitario, total (calculado), canal, created_at | `total = cantidad × precio_unitario` lo calcula PostgreSQL |
 
-SQL en [`backend/sql/`](backend/sql): tablas y RLS (`001`), rol propio de la API (`002`) y datos de demo (`003`).
+SQL en [`backend/sql/`](backend/sql): tablas y RLS (`001`), rol propio de la API (`002`), datos de demo (`003`) y
+un ajuste que pidió el asesor de seguridad de Supabase (`004`). La API se conecta por el *session pooler* (IPv4).
 La API entra con un rol `aeternum_api` con permisos mínimos (sin borrar ventas), no con el usuario `postgres`.
 
 ## API (FastAPI)
@@ -61,9 +62,12 @@ Base: `/api/v1`
 | GET | `/resumen` | Totales para el panel |
 | GET | `/salud` | Estado del servicio y de la base |
 
-`POST /ventas` usa `UPDATE … SET stock = stock - n WHERE id = … AND stock >= n RETURNING …`:
-si dos personas compran el último par al mismo tiempo, solo una venta pasa y la otra recibe `409`.
+`POST /ventas` es una sola sentencia SQL (un CTE con `UPDATE … SET stock = stock - n WHERE id = … AND stock >= n RETURNING …`
+seguido del `INSERT` de la venta), así que es atómica: si dos personas compran el último par al mismo tiempo, solo una venta pasa y la otra recibe `409`.
 Probado con 10 ventas simultáneas sobre 3 pares: 3 ventas `201`, 7 rechazos `409`, stock final 0.
+
+La conexión usa `AUTOCOMMIT`: como la base está lejos (Supabase en us-east-1), cada lectura hace un solo
+viaje de ida y vuelta en vez de cuatro (ping, `BEGIN`, consulta, `ROLLBACK`); bajó de ~750 ms a ~190 ms.
 
 ## Frontend (React + Vite + Tailwind + Three.js)
 
