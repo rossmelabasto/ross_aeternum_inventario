@@ -1,8 +1,8 @@
 # Aeternum · Tienda 3D e inventario
 
 Proyecto de **Tecnologías Informáticas** (Diplomado en Desarrollo de Software, UDABOL).
-Inventario y ventas de [Aeternum](https://aeternum.boutique), una tienda de tenis de segunda mano:
-una tienda 3D interactiva, un panel de ventas y una API REST sobre PostgreSQL (Supabase).
+Inventario y ventas de [Aeternum](https://aeternum.boutique), una tienda de tenis y ropa de segunda mano:
+una tienda 3D que se recorre como un juego, un panel de ventas y una API REST sobre PostgreSQL (Supabase).
 
 > Los datos son ficticios. Esta demo no toca la base de datos real de la tienda.
 
@@ -33,12 +33,13 @@ categorias (1) ──< productos (N) ──< ventas (N)
 
 | Tabla | Campos | Notas |
 |---|---|---|
-| `categorias` | id, nombre (único), descripcion, created_at | Urbanas, Deportivas, Botas |
-| `productos` | id, categoria_id → categorias, nombre, marca, talla, condicion, precio, stock, image_url, created_at | `stock >= 0`, `precio > 0`, talla 30–50 |
+| `categorias` | id, nombre (único), descripcion, tipo, created_at | `tipo`: calzado, polera, hoodie, chamarra, pantalon o gorra (decide el modelo 3D) |
+| `productos` | id, categoria_id → categorias, nombre, marca, talla, condicion, precio, stock, color, image_url, created_at | `stock >= 0`, `precio > 0`, talla en texto (41, M, 32, 7 1/4), color hexadecimal |
 | `ventas` | id, producto_id → productos, cantidad, precio_unitario, total (calculado), canal, created_at | `total = cantidad × precio_unitario` lo calcula PostgreSQL |
 
-SQL en [`backend/sql/`](backend/sql): tablas y RLS (`001`), rol propio de la API (`002`), datos de demo (`003`) y
-un ajuste que pidió el asesor de seguridad de Supabase (`004`). La API se conecta por el *session pooler* (IPv4).
+SQL en [`backend/sql/`](backend/sql): tablas y RLS (`001`), rol propio de la API (`002`), datos de demo (`003`),
+un ajuste que pidió el asesor de seguridad de Supabase (`004`) y la ampliación a ropa (`005`: `tipo`, `color`,
+talla en texto, 5 categorías y 37 productos más; 8 categorías y 47 productos en total). La API se conecta por el *session pooler* (IPv4).
 La API entra con un rol `aeternum_api` con permisos mínimos (sin borrar ventas), no con el usuario `postgres`.
 
 ## API (FastAPI)
@@ -71,15 +72,23 @@ viaje de ida y vuelta en vez de cuatro (ping, `BEGIN`, consulta, `ROLLBACK`); ba
 
 ## Frontend (React + Vite + Tailwind + Three.js)
 
-- **Tienda 3D** (`#/`): sala con un estante por categoría y los pares que vienen de la API, hechos con
-  `@react-three/fiber` y `@react-three/drei`. Al pasar el mouse muestra precio y stock; los agotados se ven
-  transparentes. Podio con el par destacado y botón flotante al panel.
+- **Tienda 3D** (`#/`): el interior de una tienda que se recorre en primera persona.
+  - Controles: `W A S D` o flechas para caminar, `←/→` para girar, `Shift` para correr, arrastrar el mouse
+    para mirar; en el celular, cruceta táctil. Colisiones con paredes y muebles.
+  - Pared del fondo con repisas de calzado, rieles con ropa colgada en las paredes laterales, mesa de gorras,
+    podio con el par destacado, caja, probadores con espejo, plantas, pufs, alfombra, luces de techo, vidriera
+    de entrada y letrero neón. Cada sección tiene su letrero con la cantidad de productos.
+  - Todo lo que hay en la tienda sale de la API: las secciones se arman solas a partir de las categorías
+    (`tipo` decide si van en repisa, riel o mesa) y los productos agotados se ven transparentes.
+  - Clic en un producto: ficha con talla, stock, condición y precio, **Vender 1 unidad** y **Ver en 3D**.
+  - Buscador "¿qué buscas?" que te lleva caminando hasta el producto y lo marca con una flecha, y un
+    minimapa con tu posición (clic en el plano para ir a ese punto).
 - **Panel de ventas** (`#/panel`): totales, lista con filtros, botón **Vender 1 unidad** (baja el stock al
   instante y lo confirma con el backend; si falla, vuelve al valor real), reponer stock, formulario de
-  registro, últimas ventas y un `api.log` con cada petición y su código HTTP.
-- **Visor 3D** (`#/visor/:id`): un par grande que se gira y se acerca con el mouse (`OrbitControls`).
-- Las zapatillas son modelos propios armados con formas extruidas de Three.js (sin archivos externos).
-- Tema oscuro (lima) y claro (violeta).
+  registro con color, últimas ventas y un `api.log` con cada petición y su código HTTP.
+- **Visor 3D** (`#/visor/:id`): cualquier producto en grande, se gira y se acerca con el mouse (`OrbitControls`).
+- Los modelos (zapatillas, poleras, hoodies, chamarras, pantalones y gorras) están hechos con formas
+  extruidas de Three.js, sin archivos externos. Tema oscuro (lima) y claro (violeta).
 
 ## Cómo correrlo en local
 

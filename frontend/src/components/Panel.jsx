@@ -3,7 +3,7 @@ import { API_URL, api, bs, escucharRegistro } from '../lib/api.js'
 import { ir } from '../lib/useHash.js'
 import { coloresDe } from '../lib/colores.js'
 
-const VACIO = { nombre: '', marca: '', categoria_id: '', talla: '', precio: '', stock: '1', condicion: 'Usado - buen estado' }
+const VACIO = { nombre: '', marca: '', categoria_id: '', talla: '', precio: '', stock: '1', condicion: 'Usado - buen estado', color: '#afff00' }
 
 function Tarjeta({ titulo, valor, extra }) {
   return (
@@ -31,7 +31,6 @@ function Formulario({ categorias, onCreado, avisar }) {
       const nuevo = await api.crearProducto({
         ...f,
         categoria_id: Number(f.categoria_id),
-        talla: Number(f.talla),
         precio: Number(f.precio),
         stock: Number(f.stock),
       })
@@ -60,12 +59,14 @@ function Formulario({ categorias, onCreado, avisar }) {
             {categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select></label>
         <label><span className={etiqueta}>Talla</span>
-          <input required type="number" min="30" max="50" step="0.5" value={f.talla} onChange={set('talla')} placeholder="41" /></label>
+          <input required maxLength={8} value={f.talla} onChange={set('talla')} placeholder="41 · M · 32" /></label>
         <label><span className={etiqueta}>Precio (Bs)</span>
           <input required type="number" min="1" step="0.01" value={f.precio} onChange={set('precio')} placeholder="400" /></label>
         <label><span className={etiqueta}>Stock</span>
           <input required type="number" min="0" step="1" value={f.stock} onChange={set('stock')} /></label>
-        <label><span className={etiqueta}>Condición</span>
+        <label><span className={etiqueta}>Color</span>
+          <input type="color" value={f.color} onChange={set('color')} className="!h-[42px] cursor-pointer !p-1" /></label>
+        <label className="col-span-2"><span className={etiqueta}>Condición</span>
           <select value={f.condicion} onChange={set('condicion')}>
             <option>Nuevo</option><option>Usado - como nuevo</option><option>Usado - buen estado</option>
           </select></label>
@@ -173,7 +174,7 @@ export default function Panel({ categorias, productos, setProductos, resumen, ve
                 </button>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{p.nombre}</div>
-                  <div className="text-tenue text-xs">{p.marca} · {p.categoria} · talla {Number(p.talla)} · {p.condicion}</div>
+                  <div className="text-tenue text-xs">{p.marca} · {p.categoria} · talla {p.talla} · {p.condicion}</div>
                 </div>
                 <div className="font-mono text-sm">{bs(p.precio)}</div>
                 <div className="flex items-center gap-1">

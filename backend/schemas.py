@@ -7,12 +7,15 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 Condicion = Literal["Nuevo", "Usado - como nuevo", "Usado - buen estado"]
 Canal = Literal["Tienda", "Marketplace", "WhatsApp", "Instagram"]
+Tipo = Literal["calzado", "polera", "hoodie", "chamarra", "pantalon", "gorra"]
+COLOR = r"^#[0-9a-fA-F]{6}$"
 
 
 # ---------- Categorías ----------
 class CategoriaBase(BaseModel):
     nombre: str = Field(min_length=2, max_length=60, examples=["Urbanas"])
     descripcion: str | None = Field(None, max_length=200, examples=["Tenis de uso diario"])
+    tipo: Tipo = "calzado"
 
 
 class CategoriaCreate(CategoriaBase):
@@ -30,11 +33,12 @@ class ProductoBase(BaseModel):
     categoria_id: int = Field(examples=[1])
     nombre: str = Field(min_length=2, max_length=80, examples=["Air Force 1 Low"])
     marca: str = Field(min_length=2, max_length=40, examples=["Nike"])
-    talla: Decimal = Field(ge=30, le=50, decimal_places=1, examples=[41])
+    talla: str = Field(min_length=1, max_length=8, examples=["41", "M", "32"])
     condicion: Condicion = "Usado - buen estado"
     precio: Decimal = Field(gt=0, max_digits=10, decimal_places=2, examples=[420])
     stock: int = Field(0, ge=0, examples=[2])
     image_url: str | None = None
+    color: str | None = Field(None, pattern=COLOR, examples=["#afff00"])
 
 
 class ProductoCreate(ProductoBase):
@@ -46,11 +50,12 @@ class ProductoUpdate(BaseModel):
     categoria_id: int | None = None
     nombre: str | None = Field(None, min_length=2, max_length=80)
     marca: str | None = Field(None, min_length=2, max_length=40)
-    talla: Decimal | None = Field(None, ge=30, le=50, decimal_places=1)
+    talla: str | None = Field(None, min_length=1, max_length=8)
     condicion: Condicion | None = None
     precio: Decimal | None = Field(None, gt=0, max_digits=10, decimal_places=2)
     stock: int | None = Field(None, ge=0)
     image_url: str | None = None
+    color: str | None = Field(None, pattern=COLOR)
 
 
 class StockUpdate(BaseModel):
@@ -61,6 +66,7 @@ class ProductoOut(ProductoBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     categoria: str | None = None
+    tipo: str | None = None
     created_at: datetime
 
     @field_validator("categoria", mode="before")

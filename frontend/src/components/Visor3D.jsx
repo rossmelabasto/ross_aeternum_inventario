@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { ContactShadows, OrbitControls } from '@react-three/drei'
-import { Sneaker } from './Sneaker.jsx'
+import { Bounds, ContactShadows, OrbitControls } from '@react-three/drei'
+import { Modelo3D } from './modelos/Modelo3D.jsx'
 import { coloresDe } from '../lib/colores.js'
 import { bs } from '../lib/api.js'
 import { ir } from '../lib/useHash.js'
@@ -22,16 +22,19 @@ export default function Visor3D({ productos, id, tema, onVender, vendiendo }) {
           <directionalLight position={[3, 5, 2]} intensity={1.6} castShadow />
           <directionalLight position={[-3, 2, -2]} intensity={0.5} />
           <pointLight position={[0, 0.3, 1.5]} intensity={2} color={c.acento} distance={4} />
-          {producto && <Sneaker key={producto.id} producto={producto} escala={1.3} position={[0, -0.25, 0]} />}
-          <ContactShadows position={[0, -0.25, 0]} opacity={0.55} scale={4} blur={2.2} far={1} />
-          <OrbitControls
+          {producto && (
+            <Bounds key={producto.id} fit clip observe margin={1.25}>
+              <Modelo3D producto={producto} escala={producto.tipo === 'calzado' ? 1.3 : 2.2} />
+            </Bounds>
+          )}
+          
+          <OrbitControls makeDefault
             autoRotate={girar}
             autoRotateSpeed={1.6}
             enablePan={false}
-            minDistance={1.1}
-            maxDistance={5}
-            target={[0, 0.1, 0]}
-            enableDamping
+            minDistance={0.6}
+            maxDistance={6}
+                        enableDamping
           />
         </Canvas>
         <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-4">
@@ -56,7 +59,7 @@ export default function Visor3D({ productos, id, tema, onVender, vendiendo }) {
               ))}
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <div><dt className="text-tenue">Talla</dt><dd className="font-mono text-lg">{Number(producto.talla)}</dd></div>
+              <div><dt className="text-tenue">Talla</dt><dd className="font-mono text-lg">{producto.talla}</dd></div>
               <div><dt className="text-tenue">Stock</dt><dd className={`font-mono text-lg ${producto.stock ? '' : 'text-peligro'}`}>{producto.stock || 'agotado'}</dd></div>
               <div className="col-span-2"><dt className="text-tenue">Condición</dt><dd>{producto.condicion}</dd></div>
             </dl>
@@ -84,7 +87,7 @@ export default function Visor3D({ productos, id, tema, onVender, vendiendo }) {
               >
                 <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: coloresDe(p)[0] }} />
                 <span className="flex-1 truncate">{p.nombre}</span>
-                <span className="text-tenue font-mono text-xs">{Number(p.talla)}</span>
+                <span className="text-tenue font-mono text-xs">{p.categoria}</span>
               </button>
             ))}
           </div>

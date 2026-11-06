@@ -5,7 +5,7 @@ import { ir, useHash } from './lib/useHash.js'
 import { useTema } from './lib/useTema.js'
 
 // Las vistas 3D se cargan aparte para que el panel abra rápido
-const Tienda3D = lazy(() => import('./components/Tienda3D.jsx'))
+const Tienda3D = lazy(() => import('./components/tienda/Tienda3D.jsx'))
 const Visor3D = lazy(() => import('./components/Visor3D.jsx'))
 
 function Logo() {
@@ -128,7 +128,7 @@ export default function App() {
             ventas={ventas} recargar={recargar} onVender={vender} vendiendo={vendiendo} avisar={avisar} />
         )}
         <Suspense fallback={<Cargando />}>
-          {vista === 'tienda' && <Tienda3D categorias={categorias} productos={productos} tema={tema} cargando={cargando} error={error} />}
+          {vista === 'tienda' && <Tienda3D categorias={categorias} productos={productos} tema={tema} cargando={cargando} error={error} onVender={vender} vendiendo={vendiendo !== null} />}
           {vista === 'visor' && <Visor3D productos={productos} id={id} tema={tema} onVender={vender} vendiendo={vendiendo !== null} />}
         </Suspense>
       </main>

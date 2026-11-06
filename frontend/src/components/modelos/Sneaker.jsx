@@ -1,6 +1,5 @@
-import { useMemo } from 'react'
 import * as THREE from 'three'
-import { alturaCuello, coloresDe } from '../lib/colores.js'
+import { alturaCuello, coloresDe } from '../../lib/colores.js'
 
 export { coloresDe }
 
@@ -79,7 +78,14 @@ function techo(shape, x) {
   return mejor
 }
 
+const cache = new Map()
+/** Las geometrías se comparten entre todos los pares con el mismo cuello. */
 function geometrias(cuello) {
+  if (!cache.has(cuello)) cache.set(cuello, crear(cuello))
+  return cache.get(cuello)
+}
+
+function crear(cuello) {
   const capellada = perfilCapellada(cuello)
 
   // Franja lateral: se pega a la superficie siguiendo el mismo ancho deformado
@@ -116,7 +122,7 @@ function geometrias(cuello) {
  */
 export function Sneaker({ producto, escala = 1, agotado = false, ...props }) {
   const cuello = alturaCuello(producto)
-  const g = useMemo(() => geometrias(cuello), [cuello])
+  const g = geometrias(cuello)
   const [cCapellada, cSuela, cFranja] = coloresDe(producto)
   const mat = { transparent: agotado, opacity: agotado ? 0.25 : 1, depthWrite: !agotado }
   const cCordon = cFranja === '#afff00' ? '#f2f2ee' : cFranja
