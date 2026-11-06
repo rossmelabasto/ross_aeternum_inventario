@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aeternum · Tienda 3D e inventario — Diapositivas</title>
+<link rel="icon" href="/favicon.svg">
+<style>
+@font-face { font-family: "Space Grotesk"; src: url(fonts/space-grotesk-latin-wght-normal.woff2) format("woff2"); font-weight: 300 700; }
+@font-face { font-family: "Inter"; src: url(fonts/inter-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; }
+@font-face { font-family: "JetBrains Mono"; src: url(fonts/jetbrains-mono-latin-wght-normal.woff2) format("woff2"); font-weight: 100 800; }
+:root { --fondo: #0a0a0b; --panel: #131316; --borde: #26262b; --texto: #ededed; --tenue: #8b8b93; --lima: #afff00; }
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; background: #050506; color: var(--texto); font-family: Inter, system-ui, sans-serif; }
+.escenario { position: fixed; inset: 0; display: grid; place-items: center; }
+.diapo {
+  width: 1280px; height: 720px; position: absolute; overflow: hidden; padding: 64px 72px;
+  background-color: var(--fondo); background-image: radial-gradient(#1d1d21 1.2px, transparent 1.2px); background-size: 24px 24px;
+  transform-origin: center; display: none; flex-direction: column;
+}
+.diapo.activa { display: flex; animation: entra .35s ease both; }
+@keyframes entra { from { opacity: 0; transform: var(--esc) translateX(24px); } to { opacity: 1; transform: var(--esc); } }
+.diapo { transform: var(--esc); }
+.etq { font-family: "JetBrains Mono", monospace; color: var(--lima); font-size: 15px; letter-spacing: .18em; text-transform: uppercase; }
+h1, h2 { font-family: "Space Grotesk", sans-serif; letter-spacing: -.03em; line-height: 1.02; }
+h1 { font-size: 104px; font-weight: 700; }
+h2 { font-size: 54px; font-weight: 700; margin: 10px 0 26px; }
+p, li { font-size: 22px; line-height: 1.5; color: #cfcfd4; }
+.tenue { color: var(--tenue); }
+.lima { color: var(--lima); }
+ul.l { list-style: none; padding: 0; display: grid; gap: 14px; }
+ul.l li { padding-left: 30px; position: relative; }
+ul.l li::before { content: ""; position: absolute; left: 0; top: 13px; width: 12px; height: 12px; border-radius: 3px; background: var(--lima); }
+.fila { display: grid; gap: 28px; flex: 1; min-height: 0; }
+.caja { background: var(--panel); border: 1px solid var(--borde); border-radius: 18px; padding: 22px 24px; }
+.caja b { font-family: "Space Grotesk"; font-size: 24px; color: var(--texto); display: block; margin-bottom: 6px; }
+.caja p, .caja li { font-size: 18px; }
+.mono { font-family: "JetBrains Mono", monospace; }
+img.cap { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; border: 1px solid var(--borde); }
+.pie { position: absolute; left: 72px; right: 72px; bottom: 26px; display: flex; justify-content: space-between; font-family: "JetBrains Mono"; font-size: 13px; color: #5b5b63; }
+.flecha { font-family: "JetBrains Mono"; color: var(--lima); font-size: 30px; align-self: center; text-align: center; }
+.chip { display: inline-block; font-family: "JetBrains Mono"; font-size: 15px; padding: 6px 12px; border: 1px solid var(--borde); border-radius: 999px; background: #18181b; margin: 0 6px 8px 0; }
+.big { font-family: "Space Grotesk"; font-size: 64px; font-weight: 700; color: var(--lima); line-height: 1; }
+pre { font-family: "JetBrains Mono"; font-size: 15px; line-height: 1.55; background: #0d0d0f; border: 1px solid var(--borde); border-radius: 14px; padding: 18px 20px; color: #d6d6db; }
+.k { color: var(--lima); }
+/* Controles de la vista web */
+.ui { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; z-index: 9; font-family: "JetBrains Mono"; font-size: 13px; }
+.ui button, .ui a { background: #131316; color: var(--texto); border: 1px solid var(--borde); border-radius: 999px; padding: 8px 14px; cursor: pointer; text-decoration: none; font: inherit; }
+.ui a.pdf { background: var(--lima); color: #0a0a0b; border-color: var(--lima); font-weight: 700; }
+.ui span { color: var(--tenue); min-width: 64px; text-align: center; }
+@media print {
+  @page { size: 1280px 720px; margin: 0; }
+  html, body { background: var(--fondo); }
+  .escenario { position: static; display: block; }
+  .diapo { display: flex !important; position: relative; transform: none !important; animation: none !important; page-break-after: always; break-after: page; }
+  .ui { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="escenario">
+
+<!-- 1. Portada -->
+<section class="diapo" style="padding:0">
+  <img src="img/tienda-oscuro.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.32">
+  <div style="position:absolute;inset:0;background:linear-gradient(90deg,#0a0a0b 30%,transparent)"></div>
+  <div style="position:relative;padding:96px 80px;display:flex;flex-direction:column;height:100%">
+    <div class="etq">Tecnologías Informáticas · Proyecto final</div>
+    <h1 style="margin-top:22px">aeternum<span class="lima">.</span></h1>
+    <p style="font-size:30px;margin-top:16px;color:#e8e8ea">Tienda 3D, panel de ventas e inventario<br>sobre FastAPI + Supabase</p>
+    <div style="margin-top:auto">
+      <p style="font-family:'Space Grotesk';font-size:26px;color:var(--texto)">Rossmel Max Abasto Maire</p>
+      <p class="tenue mono" style="font-size:16px">Diplomado en Desarrollo de Software · UDABOL · 2026</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Problema y objetivo -->
+<section class="diapo">
+  <div class="etq">01 · El proyecto</div>
+  <h2>Una tienda real, con un problema real</h2>
+  <div class="fila" style="grid-template-columns:1fr 1fr;flex:none">
+    <div class="caja"><b>El problema</b><p>Aeternum vende tenis y ropa de segunda mano por redes. La demanda existe; lo que frena es el trabajo manual: saber qué queda en stock y registrar cada venta.</p></div>
+    <div class="caja"><b>El objetivo</b><p>Un sistema web de inventario y ventas: base de datos en la nube, API documentada y una tienda 3D conectada a datos en vivo.</p></div>
+  </div>
+  <ul class="l" style="margin-top:34px;grid-template-columns:1fr 1fr 1fr">
+    <li>3 tablas en Supabase</li><li>API REST con Swagger</li><li>Tienda 3D recorrible</li>
+  </ul>
+  <div class="pie"><span>aeternum.</span><span>Datos de demostración ficticios</span></div>
+</section>
+
+<!-- 3. Arquitectura -->
+<section class="diapo">
+  <div class="etq">02 · Arquitectura</div>
+  <h2>Del navegador a la base de datos</h2>
+  <div class="fila" style="grid-template-columns:1fr 50px 1fr 50px 1fr;flex:none;align-items:stretch">
+    <div class="caja"><b>Frontend</b><p>React · Vite · Tailwind<br>Three.js + React Three Fiber</p><p class="mono lima" style="font-size:15px;margin-top:10px">aeternum-3d.rossmel.com</p></div>
+    <div class="flecha">→</div>
+    <div class="caja"><b>API</b><p>FastAPI · SQLAlchemy<br>Pydantic · Swagger</p><p class="mono lima" style="font-size:15px;margin-top:10px">aeternum-api.rossmel.com</p></div>
+    <div class="flecha">→</div>
+    <div class="caja"><b>Base de datos</b><p>Supabase<br>PostgreSQL 17 + RLS</p><p class="mono lima" style="font-size:15px;margin-top:10px">3 tablas · 47 productos</p></div>
+  </div>
+  <div class="caja" style="margin-top:28px"><b>Despliegue en servidor propio</b><p>En lugar de Render y Vercel: dos contenedores Docker (API y nginx) en mi servidor casero, publicados con HTTPS por Cloudflare Tunnel en mi dominio. No se duerme, costo cero. Código en GitHub.</p></div>
+</section>
+
+<!-- 4. Base de datos -->
+<section class="diapo">
+  <div class="etq">03 · Base de datos</div>
+  <h2>Tres tablas, bien relacionadas</h2>
+  <div class="fila" style="grid-template-columns:1fr 70px 1.2fr 70px 1fr;flex:none">
+    <div class="caja"><b>categorias</b><p class="mono" style="font-size:15px;line-height:1.8">id · nombre<br>descripcion<br><span class="lima">tipo</span></p></div>
+    <div class="flecha">1─&lt;N</div>
+    <div class="caja"><b>productos</b><p class="mono" style="font-size:15px;line-height:1.8">id · categoria_id<br>nombre · marca · talla<br>condicion · color<br>precio · <span class="lima">stock ≥ 0</span></p></div>
+    <div class="flecha">1─&lt;N</div>
+    <div class="caja"><b>ventas</b><p class="mono" style="font-size:15px;line-height:1.8">id · producto_id<br>cantidad · precio_unitario<br><span class="lima">total</span> (calculado)<br>canal</p></div>
+  </div>
+  <ul class="l" style="margin-top:28px">
+    <li>Seguridad por filas (RLS): el público solo lee el catálogo; las ventas solo las ve el backend.</li>
+    <li>La API entra con un rol propio que no puede borrar ventas, no con el usuario <span class="mono">postgres</span>.</li>
+    <li>Migraciones numeradas (001–005): al sumar ropa, la talla pasó a texto y se agregaron color y tipo.</li>
+  </ul>
+</section>
+
+<!-- 5. API -->
+<section class="diapo">
+  <div class="etq">04 · API REST</div>
+  <h2>FastAPI + Swagger</h2>
+  <div class="fila" style="grid-template-columns:1.05fr 1fr">
+    <img class="cap" src="img/swagger.jpg" alt="Swagger" style="object-position:top">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <pre><span class="k">with</span> p <span class="k">as</span> (
+  <span class="k">update</span> productos <span class="k">set</span> stock = stock - :c
+  <span class="k">where</span> id = :id <span class="k">and</span> stock &gt;= :c
+  <span class="k">returning</span> ...)
+<span class="k">insert into</span> ventas ... <span class="k">from</span> p</pre>
+      <div class="caja"><b>Vender sin quedar en negativo</b><p>Una sola sentencia: descuenta y registra a la vez. 10 compras simultáneas del mismo par con 3 en stock → <span class="lima">3 ventas, 7 rechazos (409)</span>.</p></div>
+      <div class="caja"><b>Validación automática</b><p>Pydantic responde 422 si llega un precio negativo o una talla vacía.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Tienda 3D -->
+<section class="diapo">
+  <div class="etq">05 · Gráficos 3D</div>
+  <h2>Una tienda que se recorre</h2>
+  <div class="fila" style="grid-template-columns:1.35fr 1fr">
+    <img class="cap" src="img/ropa-oscuro.jpg" alt="Tienda 3D">
+    <ul class="l" style="align-content:center">
+      <li>Primera persona: W A S D y mouse, como un videojuego.</li>
+      <li>Las secciones salen solas de la base: calzado en repisas, ropa en rieles, gorras en la mesa.</li>
+      <li>Clic en un producto → ficha y "Vender 1 unidad".</li>
+      <li>Buscador que te lleva caminando y minimapa.</li>
+      <li>Modelos hechos con código en Three.js.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 7. Panel y visor -->
+<section class="diapo">
+  <div class="etq">06 · Panel y visor</div>
+  <h2>Vender y ver cada producto</h2>
+  <div class="fila" style="grid-template-columns:1fr 1fr">
+    <div style="display:flex;flex-direction:column;gap:12px;min-height:0"><img class="cap" src="img/panel-oscuro.jpg" alt="Panel" style="object-position:top;flex:1;min-height:0"><p class="tenue" style="font-size:17px">Panel: totales, filtros, venta al instante, registro y <span class="mono">api.log</span>.</p></div>
+    <div style="display:flex;flex-direction:column;gap:12px;min-height:0"><img class="cap" src="img/visor-oscuro.jpg" alt="Visor" style="object-position:left top;flex:1;min-height:0"><p class="tenue" style="font-size:17px">Visor 3D: girar y acercar cualquier producto.</p></div>
+  </div>
+</section>
+
+<!-- 8. Tecnologías -->
+<section class="diapo">
+  <div class="etq">07 · Tecnologías</div>
+  <h2>Todo lo que se usó</h2>
+  <div class="fila" style="grid-template-columns:repeat(4,1fr);flex:none">
+    <div class="caja"><b>Datos</b><span class="chip">Supabase</span><span class="chip">PostgreSQL</span><span class="chip">RLS</span></div>
+    <div class="caja"><b>Backend</b><span class="chip">Python</span><span class="chip">FastAPI</span><span class="chip">SQLAlchemy</span><span class="chip">Pydantic</span><span class="chip">Swagger</span></div>
+    <div class="caja"><b>Frontend</b><span class="chip">React</span><span class="chip">Vite</span><span class="chip">Tailwind</span><span class="chip">Three.js</span><span class="chip">R3F · drei</span></div>
+    <div class="caja"><b>Despliegue</b><span class="chip">Docker</span><span class="chip">nginx</span><span class="chip">Cloudflare Tunnel</span><span class="chip">GitHub</span></div>
+  </div>
+  <div class="caja" style="margin-top:26px;border-color:#3d4a16"><b>Asistente de IA: Claude Code</b><p>En lugar de Devin. Me ayudó a escribir el código, crear las tablas en Supabase y encontrar errores probando en el navegador. Todo revisado y probado por mí.</p></div>
+</section>
+
+<!-- 9. Cambios respecto a la guía -->
+<section class="diapo">
+  <div class="etq">08 · Respecto a la guía</div>
+  <h2>Qué cambié y por qué</h2>
+  <div class="fila" style="grid-template-columns:1fr 1fr 1fr;flex:none">
+    <div class="caja"><b>Devin → Claude Code</b><p>Mismo rol de asistente; el prompt para Devin está en el repositorio.</p></div>
+    <div class="caja"><b>Render y Vercel → servidor propio</b><p>Con permiso de la docente: dominio propio, sin dormirse y sin costo.</p></div>
+    <div class="caja"><b>Slack y Comentera</b><p>No se usaron (proyecto individual). El panel muestra cada petición en su <span class="mono">api.log</span>.</p></div>
+  </div>
+  <div class="fila" style="grid-template-columns:repeat(3,1fr);flex:none;margin-top:30px">
+    <div><div class="big">47</div><p class="tenue">productos en 8 categorías</p></div>
+    <div><div class="big">~190 ms</div><p class="tenue">por consulta (antes ~750 ms)</p></div>
+    <div><div class="big">0</div><p class="tenue">stock negativo con ventas simultáneas</p></div>
+  </div>
+</section>
+
+<!-- 10. Cierre -->
+<section class="diapo" style="padding:0">
+  <img src="img/calzado-oscuro.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.25">
+  <div style="position:absolute;inset:0;background:linear-gradient(0deg,#0a0a0b 25%,transparent)"></div>
+  <div style="position:relative;padding:96px 80px;display:flex;flex-direction:column;height:100%">
+    <div class="etq">Pruébalo</div>
+    <h1 style="font-size:88px;margin-top:18px">Gracias<span class="lima">.</span></h1>
+    <div style="margin-top:auto;display:grid;grid-template-columns:auto 1fr;gap:10px 28px;font-size:22px">
+      <span class="tenue mono">Tienda 3D</span><span class="mono lima">aeternum-3d.rossmel.com</span>
+      <span class="tenue mono">API · Swagger</span><span class="mono">aeternum-api.rossmel.com/docs</span>
+      <span class="tenue mono">Código</span><span class="mono">github.com/rossmelabasto/ross_aeternum_inventario</span>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="ui">
+  <button id="ant" aria-label="Anterior">←</button>
+  <span id="num">1 / 10</span>
+  <button id="sig" aria-label="Siguiente">→</button>
+  <button id="full" title="Pantalla completa (F)">⛶</button>
+  <a class="pdf" href="aeternum-diapositivas.pdf" download>Descargar PDF</a>
+  <a href="/">Abrir la tienda</a>
+</div>
+
+<script>
+const ds = [...document.querySelectorAll('.diapo')]
+let i = Math.max(0, Math.min(ds.length - 1, (parseInt(location.hash.slice(1)) || 1) - 1))
+function escalar() {
+  const s = Math.min(innerWidth / 1280, (innerHeight - 70) / 720)
+  document.documentElement.style.setProperty('--esc', `scale(${s})`)
+}
+function ir(n) {
+  i = Math.max(0, Math.min(ds.length - 1, n))
+  ds.forEach((d, k) => d.classList.toggle('activa', k === i))
+  document.getElementById('num').textContent = `${i + 1} / ${ds.length}`
+  history.replaceState(null, '', '#' + (i + 1))
+}
+addEventListener('resize', escalar)
+addEventListener('keydown', (e) => {
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); ir(i + 1) }
+  if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); ir(i - 1) }
+  if (e.key === 'Home') ir(0)
+  if (e.key === 'End') ir(ds.length - 1)
+  if (e.key === 'f' || e.key === 'F') document.getElementById('full').click()
+})
+document.getElementById('ant').onclick = () => ir(i - 1)
+document.getElementById('sig').onclick = () => ir(i + 1)
+document.getElementById('full').onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()
+document.querySelector('.escenario').addEventListener('click', (e) => { if (!e.target.closest('a,button')) ir(e.clientX > innerWidth / 3 ? i + 1 : i - 1) })
+escalar(); ir(i)
+</script>
+</body>
+</html>
