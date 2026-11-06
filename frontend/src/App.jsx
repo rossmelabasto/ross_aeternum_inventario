@@ -34,6 +34,7 @@ function Nav({ vista, tema, cambiarTema }) {
               {texto}
             </a>
           ))}
+          <a href="/diapos/" className="text-tenue hover:text-texto whitespace-nowrap rounded-full px-2.5 py-1.5 transition sm:px-3">Diapositivas</a>
         </nav>
         <button onClick={cambiarTema} title="Cambiar tema" aria-label="Cambiar tema"
           className="border-borde hover:border-acento grid h-9 w-9 cursor-pointer place-items-center rounded-full border transition">
@@ -134,7 +135,7 @@ export default function App() {
       </main>
       {vista !== 'tienda' && (
         <footer className="text-tenue mx-auto max-w-7xl px-6 py-8 text-xs">
-          Aeternum · proyecto de Tecnologías Informáticas (UDABOL) · datos ficticios · React + Three.js + FastAPI + Supabase
+          Aeternum · proyecto de Tecnologías Informáticas (UDABOL) · datos ficticios · React + Three.js + FastAPI + Supabase · <a href="/diapos/" className="hover:text-acento underline">diapositivas</a> · <a href="/diapos/aeternum-diapositivas.pdf" download className="hover:text-acento underline">descargar PDF</a>
         </footer>
       )}
       <Avisos avisos={avisos} />
