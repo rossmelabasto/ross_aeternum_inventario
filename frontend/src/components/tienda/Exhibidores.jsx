@@ -119,7 +119,7 @@ function Mesa({ s, c, cantidad }) {
 
 const MUEBLES = { repisa: Repisa, riel: Riel, mesa: Mesa }
 
-function Producto({ slot, activo, onHover, onElegir }) {
+function Producto({ slot, activo, onHover, onElegir, control }) {
   const ref = useRef()
   const p = slot.producto
   useFrame((_, dt) => {
@@ -132,9 +132,14 @@ function Producto({ slot, activo, onHover, onElegir }) {
     <group position={slot.pos} rotation={[0, slot.rotY, 0]}>
       <group
         ref={ref}
-        onPointerOver={(e) => { e.stopPropagation(); onHover(slot); document.body.style.cursor = 'pointer' }}
-        onPointerOut={() => { onHover(null); document.body.style.cursor = '' }}
-        onClick={(e) => { e.stopPropagation(); if (e.delta < 8) onElegir(slot) }}
+        userData={{ slot }}
+        onPointerOver={(e) => { if (control.bloqueado) return; e.stopPropagation(); onHover(slot); document.body.style.cursor = 'pointer' }}
+        onPointerOut={() => { if (control.bloqueado) return; onHover(null); document.body.style.cursor = '' }}
+        onClick={(e) => {
+          if (control.bloqueado) return
+          e.stopPropagation()
+          if (e.delta < 8) { control.clicEnProducto = true; onElegir(slot) }
+        }}
       >
         <group scale={slot.escala}>
           {cuelga(p.tipo) && <Gancho ancho={p.tipo === 'pantalon' ? 0.44 : 0.4} />}
@@ -177,7 +182,7 @@ function Marcador({ slot, c }) {
   )
 }
 
-export function Exhibidores({ secciones, slots, c, hover, seleccion, onHover, onElegir }) {
+export function Exhibidores({ secciones, slots, c, hover, seleccion, onHover, onElegir, control, productosRef }) {
   return (
     <>
       {secciones.map((s) => {
@@ -189,9 +194,11 @@ export function Exhibidores({ secciones, slots, c, hover, seleccion, onHover, on
           </group>
         )
       })}
-      {slots.map((slot) => (
-        <Producto key={slot.producto.id} slot={slot} activo={hover?.producto.id === slot.producto.id || seleccion?.producto.id === slot.producto.id} onHover={onHover} onElegir={onElegir} />
-      ))}
+      <group ref={productosRef}>
+        {slots.map((slot) => (
+          <Producto key={slot.producto.id} slot={slot} control={control} activo={hover?.producto.id === slot.producto.id || seleccion?.producto.id === slot.producto.id} onHover={onHover} onElegir={onElegir} />
+        ))}
+      </group>
       {seleccion && <Marcador slot={seleccion} c={c} />}
       {hover && hover.producto.id !== seleccion?.producto.id && (
         <Html position={[hover.pos[0], tope(hover) + 0.12, hover.pos[2]]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>

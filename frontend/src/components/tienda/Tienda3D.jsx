@@ -13,8 +13,12 @@ import { Sala } from './Sala.jsx'
 import { INICIO, LIMITES, OJOS, libre, obstaculos, seccionesDe, ubicar } from './layout.js'
 
 // La posición se conserva al ir al panel y volver
-const control = { x: INICIO.x, z: INICIO.z, yaw: INICIO.yaw, pitch: INICIO.pitch, vx: 0, vz: 0, paso: 0, objetivo: null }
-const MOVER = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight']
+const leerSens = () => { const v = Number(localStorage.getItem('aeternum-sens')); return v >= 1 && v <= 10 ? v : 3 }
+const control = {
+  x: INICIO.x, z: INICIO.z, yaw: INICIO.yaw, pitch: INICIO.pitch, vx: 0, vz: 0, paso: 0, objetivo: null,
+  sens: leerSens(), bloqueado: false, apuntado: null, clicEnProducto: false,
+}
+const MOVER = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
 
 function Girando({ children }) {
   const ref = useRef()
@@ -44,6 +48,11 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
   const slots = useMemo(() => ubicar(secciones, productos), [secciones, productos])
   const cajas = useMemo(() => obstaculos(secciones), [secciones])
   const teclas = useRef(new Set())
+  const productosRef = useRef()
+  const lienzo = useRef(null)
+  const [bloqueado, setBloqueado] = useState(false)
+  const [apuntado, setApuntado] = useState(null)
+  const [sens, setSens] = useState(control.sens)
 
   const [hover, setHover] = useState(null)
   const [selId, setSelId] = useState(null)
@@ -105,11 +114,21 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
     return slots.filter(({ producto: p }) => `${p.nombre} ${p.marca} ${p.categoria}`.toLowerCase().includes(t)).slice(0, 6)
   }, [q, slots])
 
-  const elegir = useCallback((slot) => { setSelId(slot.producto.id); setAyuda(false) }, [])
+  const elegir = useCallback((slot) => {
+    setSelId(slot.producto.id)
+    setAyuda(false)
+    // Se suelta el mouse para poder usar los botones de la ficha
+    if (document.pointerLockElement) document.exitPointerLock()
+  }, [])
+  const capturar = useCallback(() => {
+    if (!matchMedia('(pointer: coarse)').matches) lienzo.current?.requestPointerLock?.()?.catch?.(() => {})
+  }, [])
+  const onBloqueo = useCallback((b) => { setBloqueado(b); if (!b) setApuntado(null) }, [])
+  useEffect(() => { control.sens = sens; localStorage.setItem('aeternum-sens', String(sens)) }, [sens])
 
   return (
     <div className="relative h-[calc(100dvh-4rem)] w-full overflow-hidden select-none">
-      <Canvas dpr={[1, 1.75]} camera={{ fov: 62, near: 0.05, far: 80, position: [INICIO.x, OJOS, INICIO.z] }}>
+      <Canvas dpr={[1, 1.75]} camera={{ fov: 62, near: 0.05, far: 80, position: [INICIO.x, OJOS, INICIO.z] }} onCreated={({ gl }) => { lienzo.current = gl.domElement }}>
         <color attach="background" args={[c.fondo]} />
         {/* El primer <Html> que monta drei (v10 + React 19) queda vacío: este absorbe el fallo */}
         <Html><span /></Html>
@@ -126,8 +145,8 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
             </group>
           )}
         />
-        <Exhibidores secciones={secciones} slots={slots} c={c} hover={hover} seleccion={seleccion} onHover={setHover} onElegir={elegir} />
-        <Jugador teclas={teclas} control={control} estado={control} cajas={cajas} />
+        <Exhibidores secciones={secciones} slots={slots} c={c} hover={bloqueado ? apuntado : hover} seleccion={seleccion} onHover={setHover} onElegir={elegir} control={control} productosRef={productosRef} />
+        <Jugador teclas={teclas} control={control} estado={control} cajas={cajas} productos={productosRef} onElegir={elegir} onBloqueo={onBloqueo} onApuntar={setApuntado} />
       </Canvas>
 
       {/* ---------- Interfaz ---------- */}
@@ -155,6 +174,12 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
               </ul>
             )}
             {q && resultados.length === 0 && <p className="text-tenue mt-2 text-xs">No hay nada con “{q}”.</p>}
+            <label className="text-tenue mt-2.5 flex items-center gap-2 text-[11px]">
+              <span className="font-mono uppercase">Mouse</span>
+              <input type="range" min="1" max="10" step="1" value={sens} onChange={(e) => setSens(Number(e.target.value))}
+                className="!w-auto flex-1 !border-0 !bg-transparent !p-0 accent-[var(--acento)]" aria-label="Sensibilidad del mouse" />
+              <span className="text-texto w-4 text-right font-mono">{sens}</span>
+            </label>
             {cargando && <p className="text-tenue pulso mt-2 font-mono text-xs">cargando inventario…</p>}
             {error && <p className="text-peligro mt-2 font-mono text-xs">{error}</p>}
           </div>
@@ -180,8 +205,26 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
 
         {/* Ayuda de controles */}
         <div className="text-tenue absolute bottom-6 left-1/2 hidden -translate-x-1/2 items-center gap-2 text-xs lg:flex">
-          <Tecla>W A S D</Tecla>/<Tecla>↑ ↓ ← →</Tecla> caminar · <Tecla>Shift</Tecla> correr · arrastra para mirar · clic en un producto
+          <Tecla>W A S D</Tecla>/<Tecla>↑ ↓ ← →</Tecla> caminar ·{' '}
+          {bloqueado ? <>mueve el mouse para mirar · clic para ver un producto · <Tecla>Esc</Tecla> soltar el mouse</> : <>clic en la escena para mirar con el mouse</>}
         </div>
+
+        {/* Mira (solo con el mouse capturado) */}
+        {bloqueado && (
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className={`h-2 w-2 rounded-full ring-2 transition ${apuntado ? 'bg-acento scale-150 ring-black/40' : 'bg-white/90 ring-black/50'}`} />
+          </div>
+        )}
+        {bloqueado && apuntado && (
+          <div className="absolute left-1/2 top-[calc(50%+1.2rem)] -translate-x-1/2 text-center">
+            <span className="bg-panel/90 border-borde rounded-full border px-3 py-1 text-xs backdrop-blur">clic para ver <span className="text-acento">{apuntado.producto.nombre}</span></span>
+          </div>
+        )}
+        {!bloqueado && !ayuda && !seleccion && (
+          <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 [@media(pointer:fine)]:block">
+            <span className="bg-panel/80 border-borde text-tenue rounded-full border px-4 py-2 text-sm backdrop-blur">Haz clic para caminar con el mouse</span>
+          </div>
+        )}
 
         <button onClick={() => ir('/panel')}
           className="bg-acento text-acento-texto font-display pointer-events-auto absolute bottom-3 right-3 flex cursor-pointer items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-lg transition hover:scale-[1.03] active:scale-[.98] sm:bottom-5 sm:right-5 sm:text-base">
@@ -198,12 +241,12 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
               <p className="text-tenue mt-2 text-sm">Una tienda de tenis y ropa de segunda mano que puedes recorrer. Todo lo que ves viene de la base de datos en vivo.</p>
               <ul className="mt-4 space-y-2 text-sm">
                 <li className="flex items-center gap-2"><Tecla>W A S D</Tecla> o <Tecla>↑ ↓</Tecla> para caminar, <Tecla>← →</Tecla> para girar</li>
-                <li className="flex items-center gap-2"><Tecla>Shift</Tecla> para correr · arrastra el mouse para mirar</li>
+                <li>Haz clic en la escena y mira moviendo el mouse, como en Minecraft · <Tecla>Esc</Tecla> lo suelta</li>
                 <li>Clic en un producto para ver su ficha y venderlo</li>
                 <li>Usa el buscador o el plano de abajo para ir directo a algo</li>
               </ul>
               {destacado && <p className="text-tenue mt-4 text-xs">Hoy en el podio: <span className="text-texto">{destacado.nombre}</span> a {bs(destacado.precio)}</p>}
-              <button onClick={() => setAyuda(false)} className="bg-acento text-acento-texto font-display mt-5 w-full cursor-pointer rounded-xl py-3 font-semibold transition hover:brightness-110">
+              <button onClick={() => { setAyuda(false); capturar() }} className="bg-acento text-acento-texto font-display mt-5 w-full cursor-pointer rounded-xl py-3 font-semibold transition hover:brightness-110">
                 Entrar a la tienda
               </button>
             </div>

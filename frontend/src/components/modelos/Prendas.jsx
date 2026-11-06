@@ -181,26 +181,65 @@ export function Pantalon({ producto, agotado }) {
   )
 }
 
+// Visera curva: media luna entre el borde de la copa y el borde exterior, con caída a los lados
+function geoVisera() {
+  const s = new THREE.Shape()
+  const N = 24
+  for (let i = 0; i <= N; i++) { // borde exterior, de derecha a izquierda pasando por el frente
+    const a = (i / N) * Math.PI
+    const x = Math.cos(a) * 0.104, v = Math.sin(a) * 0.205
+    i === 0 ? s.moveTo(x, v) : s.lineTo(x, v)
+  }
+  for (let i = N; i >= 0; i--) { // borde de la copa, de vuelta
+    const a = (i / N) * Math.PI
+    s.lineTo(-Math.cos(Math.PI - a) * 0.1, Math.sin(a) * 0.104)
+  }
+  const g = new THREE.ExtrudeGeometry(s, { depth: 0.005, bevelEnabled: true, bevelSize: 0.0025, bevelThickness: 0.0025, bevelSegments: 2, curveSegments: 8 })
+  g.rotateX(Math.PI / 2) // la forma queda acostada: y del dibujo → hacia adelante (+z)
+  const p = g.attributes.position
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), z = p.getZ(i)
+    p.setY(i, p.getY(i) - 1.6 * x * x - 0.16 * Math.max(0, z - 0.1)) // se curva a los lados y baja al frente
+  }
+  g.computeVertexNormals()
+  return g
+}
+
 /** Gorra con el origen en la base de la copa, visera hacia +Z. */
 export function Gorra({ producto, agotado }) {
   const [c, c2, detalle] = coloresDe(producto)
+  const visera = una('visera', geoVisera)
+  const copa = una('copa', () => new THREE.SphereGeometry(0.1, 36, 18, 0, Math.PI * 2, 0, Math.PI / 2))
+  const esc = [1, 0.86, 1.04]
   return (
     <group>
-      <mesh scale={[1, 0.78, 1.08]}>
-        <sphereGeometry args={[0.1, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        {material(c, agotado, { side: THREE.DoubleSide })}
+      {/* Copa: por fuera del color de la gorra, por dentro un forro oscuro */}
+      <mesh geometry={copa} scale={esc}>{material(c, agotado)}</mesh>
+      <mesh geometry={copa} scale={esc.map((v) => v * 0.985)}>
+        <meshStandardMaterial color={matiz(c, -0.55)} side={THREE.BackSide} roughness={1} transparent={agotado} opacity={agotado ? 0.25 : 1} />
       </mesh>
-      <mesh position={[0, 0.004, 0.1]} rotation={[0.18, 0, 0]} scale={[1, 1, 0.8]}>
-        <cylinderGeometry args={[0.1, 0.1, 0.008, 32, 1, false, -Math.PI / 2, Math.PI]} />
+      {/* Costuras de los 6 paneles */}
+      {[0, 1, 2].map((i) => (
+        <mesh key={'s' + i} rotation={[0, (i * Math.PI) / 3, 0]} scale={esc}>
+          <torusGeometry args={[0.1005, 0.0016, 4, 48, Math.PI]} />
+          <meshStandardMaterial color={matiz(c, -0.28)} transparent={agotado} opacity={agotado ? 0.25 : 1} />
+        </mesh>
+      ))}
+      {/* Ribete de la base */}
+      <mesh position={[0, 0.004, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1.04, 1]}>
+        <torusGeometry args={[0.1, 0.005, 6, 40]} />
+        {material(matiz(c, -0.2), agotado)}
+      </mesh>
+      <mesh geometry={visera} position={[0, 0.006, 0]}>{material(c2, agotado)}</mesh>
+      {/* Botón de arriba */}
+      <mesh position={[0, 0.086, 0]} scale={[1, 0.6, 1]}>
+        <sphereGeometry args={[0.008, 10, 8]} />
         {material(c2, agotado)}
       </mesh>
-      <mesh position={[0, 0.079, 0]}>
-        <sphereGeometry args={[0.009, 8, 8]} />
-        {material(c2, agotado)}
-      </mesh>
-      <mesh position={[0, 0.05, 0.091]} rotation={[-0.62, 0, 0]}>
-        <circleGeometry args={[0.016, 20]} />
-        {material(detalle, agotado, { roughness: 0.6 })}
+      {/* Parche bordado al frente */}
+      <mesh position={[0, 0.048, 0.088]} rotation={[-0.62, 0, 0]}>
+        <planeGeometry args={[0.05, 0.026]} />
+        {material(detalle, agotado, { roughness: 0.5 })}
       </mesh>
     </group>
   )

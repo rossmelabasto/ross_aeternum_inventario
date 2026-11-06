@@ -73,8 +73,10 @@ viaje de ida y vuelta en vez de cuatro (ping, `BEGIN`, consulta, `ROLLBACK`); ba
 ## Frontend (React + Vite + Tailwind + Three.js)
 
 - **Tienda 3D** (`#/`): el interior de una tienda que se recorre en primera persona.
-  - Controles: `W A S D` o flechas para caminar, `←/→` para girar, `Shift` para correr, arrastrar el mouse
-    para mirar; en el celular, cruceta táctil. Colisiones con paredes y muebles.
+  - Controles: clic en la escena para capturar el mouse y mirar como en Minecraft (pointer lock, `Esc` lo
+    suelta, sensibilidad ajustable), `W A S D` o flechas para caminar, `←/→` para girar; mira en el centro
+    que detecta el producto apuntado. En el celular, cruceta táctil y arrastrar para mirar. Colisiones con
+    paredes y muebles.
   - Pared del fondo con repisas de calzado, rieles con ropa colgada en las paredes laterales, mesa de gorras,
     podio con el par destacado, caja, probadores con espejo, plantas, pufs, alfombra, luces de techo, vidriera
     de entrada y letrero neón. Cada sección tiene su letrero con la cantidad de productos.
