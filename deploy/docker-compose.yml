@@ -1,0 +1,20 @@
+# Se usa en lilarch (~/aeternum-inventario). Puertos solo en 127.0.0.1: los expone Cloudflare Tunnel.
+services:
+  api:
+    build: ./backend
+    container_name: aeternum-api
+    env_file: ./backend/.env
+    ports:
+      - "127.0.0.1:8108:8000"
+    mem_limit: 192m
+    restart: unless-stopped
+  web:
+    image: nginx:alpine
+    container_name: aeternum-3d
+    volumes:
+      - ./dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:8109:80"
+    mem_limit: 48m
+    restart: unless-stopped

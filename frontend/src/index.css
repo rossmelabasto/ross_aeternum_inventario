@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* Paleta rOS: oscuro + lima; en claro el acento pasa a violeta */
+:root, [data-tema="oscuro"] {
+  --fondo: #0a0a0b;
+  --panel: #121214;
+  --panel-2: #18181b;
+  --borde: #26262b;
+  --texto: #ededed;
+  --tenue: #8b8b93;
+  --acento: #afff00;
+  --acento-texto: #0a0a0b;
+  --punto: #1d1d21;
+  --peligro: #ff5c5c;
+  color-scheme: dark;
+}
+[data-tema="claro"] {
+  --fondo: #f4f4f0;
+  --panel: #ffffff;
+  --panel-2: #f0f0ec;
+  --borde: #dcdcd6;
+  --texto: #121214;
+  --tenue: #6b6b73;
+  --acento: #5b3dff;
+  --acento-texto: #ffffff;
+  --punto: #d9d9d2;
+  --peligro: #d93636;
+  color-scheme: light;
+}
+
+@theme {
+  --font-display: "Space Grotesk Variable", system-ui, sans-serif;
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --color-fondo: var(--fondo);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-borde: var(--borde);
+  --color-texto: var(--texto);
+  --color-tenue: var(--tenue);
+  --color-acento: var(--acento);
+  --color-acento-texto: var(--acento-texto);
+  --color-peligro: var(--peligro);
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background-color: var(--fondo);
+  background-image: radial-gradient(var(--punto) 1px, transparent 1px);
+  background-size: 22px 22px;
+  color: var(--texto);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--acento); color: var(--acento-texto); }
+:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+input, select {
+  background: var(--panel-2);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: .55rem .7rem;
+  color: var(--texto);
+  font: inherit;
+  width: 100%;
+}
+input:focus, select:focus { outline: none; border-color: var(--acento); }
+
+@keyframes entra { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+.entra { animation: entra .35s ease both; }
+@keyframes pulso { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+.pulso { animation: pulso 1.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
