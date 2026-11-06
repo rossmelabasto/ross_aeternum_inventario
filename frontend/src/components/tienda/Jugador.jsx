@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OJOS, libre } from './layout.js'
 
-const VEL = 2.4 // m/s caminando
+const VEL = 0.48 // m/s por cada punto de velocidad (5 → 2,4 m/s)
 const GIRO = 1.9 // rad/s con ← →
 const PITCH = 1.1
 
@@ -119,7 +119,7 @@ export function Jugador({ teclas, control, estado, cajas, productos, onLlegar, o
         onLlegar?.()
       }
     } else {
-      const v = VEL
+      const v = VEL * control.vel
       const fx = -Math.sin(control.yaw), fz = -Math.cos(control.yaw)
       const rx = Math.cos(control.yaw), rz = -Math.sin(control.yaw)
       let mx = fx * avance + rx * lado, mz = fz * avance + rz * lado
@@ -138,7 +138,7 @@ export function Jugador({ teclas, control, estado, cajas, productos, onLlegar, o
 
     const rapidez = Math.hypot(control.vx, control.vz)
     control.paso += rapidez * dt * 2.2
-    const bob = o ? 0 : Math.sin(control.paso * 2) * 0.025 * Math.min(1, rapidez / VEL)
+    const bob = o ? 0 : Math.sin(control.paso * 2) * 0.025 * Math.min(1, rapidez / (VEL * 5))
     camera.position.set(control.x, OJOS + bob, control.z)
     camera.rotation.set(control.pitch, control.yaw, 0, 'YXZ')
     estado.x = control.x

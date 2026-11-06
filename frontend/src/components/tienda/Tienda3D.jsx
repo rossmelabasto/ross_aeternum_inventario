@@ -13,12 +13,15 @@ import { Sala } from './Sala.jsx'
 import { INICIO, LIMITES, OJOS, libre, obstaculos, seccionesDe, ubicar } from './layout.js'
 
 // La posición se conserva al ir al panel y volver
-const leerSens = () => { const v = Number(localStorage.getItem('aeternum-sens')); return v >= 1 && v <= 10 ? v : 3 }
+const leer = (clave, defecto) => { const v = Number(localStorage.getItem(clave)); return v >= 1 && v <= 10 ? v : defecto }
 const control = {
   x: INICIO.x, z: INICIO.z, yaw: INICIO.yaw, pitch: INICIO.pitch, vx: 0, vz: 0, paso: 0, objetivo: null,
-  sens: leerSens(), bloqueado: false, apuntado: null, clicEnProducto: false,
+  sens: leer('aeternum-sens', 3), vel: leer('aeternum-vel', 5), bloqueado: false, apuntado: null, clicEnProducto: false,
 }
 const MOVER = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
+// Por si el teclado o el sistema reportan otro código físico: también se acepta la letra
+const POR_LETRA = { w: 'KeyW', a: 'KeyA', s: 'KeyS', d: 'KeyD', q: 'KeyQ', e: 'KeyE' }
+const codigo = (e) => (MOVER.includes(e.code) ? e.code : POR_LETRA[e.key?.toLowerCase()] || null)
 
 function Girando({ children }) {
   const ref = useRef()
@@ -53,6 +56,7 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
   const [bloqueado, setBloqueado] = useState(false)
   const [apuntado, setApuntado] = useState(null)
   const [sens, setSens] = useState(control.sens)
+  const [vel, setVel] = useState(control.vel)
 
   const [hover, setHover] = useState(null)
   const [selId, setSelId] = useState(null)
@@ -66,13 +70,15 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
   )
 
   useEffect(() => {
-    const escribiendo = (e) => e.target.closest?.('input, textarea, select')
+    // Los sliders no cuentan como "escribiendo": con uno enfocado las teclas siguen moviendo al jugador
+    const escribiendo = (e) => e.target.closest?.('input:not([type=range]), textarea, select')
     const abajo = (e) => {
       if (e.code === 'Escape') { setSelId(null); setAyuda(false); return }
       if (escribiendo(e)) return
-      if (MOVER.includes(e.code)) { e.preventDefault(); teclas.current.add(e.code); setAyuda(false) }
+      const k = codigo(e)
+      if (k) { e.preventDefault(); teclas.current.add(k); setAyuda(false) }
     }
-    const arriba = (e) => teclas.current.delete(e.code)
+    const arriba = (e) => { const k = codigo(e); if (k) teclas.current.delete(k); teclas.current.delete(e.code) }
     const limpiar = () => teclas.current.clear()
     addEventListener('keydown', abajo)
     addEventListener('keyup', arriba)
@@ -125,6 +131,7 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
   }, [])
   const onBloqueo = useCallback((b) => { setBloqueado(b); if (!b) setApuntado(null) }, [])
   useEffect(() => { control.sens = sens; localStorage.setItem('aeternum-sens', String(sens)) }, [sens])
+  useEffect(() => { control.vel = vel; localStorage.setItem('aeternum-vel', String(vel)) }, [vel])
 
   return (
     <div className="relative h-[calc(100dvh-4rem)] w-full overflow-hidden select-none">
@@ -174,12 +181,15 @@ export default function Tienda3D({ categorias, productos, tema, cargando, error,
               </ul>
             )}
             {q && resultados.length === 0 && <p className="text-tenue mt-2 text-xs">No hay nada con “{q}”.</p>}
-            <label className="text-tenue mt-2.5 flex items-center gap-2 text-[11px]">
-              <span className="font-mono uppercase">Mouse</span>
-              <input type="range" min="1" max="10" step="1" value={sens} onChange={(e) => setSens(Number(e.target.value))}
-                className="!w-auto flex-1 !border-0 !bg-transparent !p-0 accent-[var(--acento)]" aria-label="Sensibilidad del mouse" />
-              <span className="text-texto w-4 text-right font-mono">{sens}</span>
-            </label>
+            {[['Mouse', sens, setSens, 'Sensibilidad del mouse'], ['Pasos', vel, setVel, 'Velocidad al caminar']].map(([nombre, valor, cambiar, etiqueta]) => (
+              <label key={nombre} className="text-tenue mt-2 flex items-center gap-2 text-[11px]">
+                <span className="w-11 font-mono uppercase">{nombre}</span>
+                <input type="range" min="1" max="10" step="1" value={valor} aria-label={etiqueta}
+                  onChange={(e) => cambiar(Number(e.target.value))} onPointerUp={(e) => e.currentTarget.blur()}
+                  className="!w-auto flex-1 !border-0 !bg-transparent !p-0 accent-[var(--acento)]" />
+                <span className="text-texto w-4 text-right font-mono">{valor}</span>
+              </label>
+            ))}
             {cargando && <p className="text-tenue pulso mt-2 font-mono text-xs">cargando inventario…</p>}
             {error && <p className="text-peligro mt-2 font-mono text-xs">{error}</p>}
           </div>

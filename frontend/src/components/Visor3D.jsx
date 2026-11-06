@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { Bounds, ContactShadows, OrbitControls } from '@react-three/drei'
+import { Bounds, Center, OrbitControls } from '@react-three/drei'
 import { Modelo3D } from './modelos/Modelo3D.jsx'
 import { coloresDe } from '../lib/colores.js'
 import { bs } from '../lib/api.js'
@@ -24,7 +24,10 @@ export default function Visor3D({ productos, id, tema, onVender, vendiendo }) {
           <pointLight position={[0, 0.3, 1.5]} intensity={2} color={c.acento} distance={4} />
           {producto && (
             <Bounds key={producto.id} fit clip observe margin={1.25}>
-              <Modelo3D producto={producto} escala={producto.tipo === 'calzado' ? 1.3 : 2.2} />
+              {/* Center deja el centro del modelo en el origen: los controles giran siempre alrededor de él */}
+              <Center>
+                <Modelo3D producto={producto} escala={producto.tipo === 'calzado' ? 1.3 : 2.2} />
+              </Center>
             </Bounds>
           )}
           
@@ -77,7 +80,7 @@ export default function Visor3D({ productos, id, tema, onVender, vendiendo }) {
         )}
 
         <div className="bg-panel border-borde rounded-2xl border p-3">
-          <div className="text-tenue px-2 pb-2 font-mono text-xs uppercase">Otros pares</div>
+          <div className="text-tenue px-2 pb-2 font-mono text-xs uppercase">Otros productos</div>
           <div className="max-h-64 overflow-y-auto">
             {productos.map((p) => (
               <button
